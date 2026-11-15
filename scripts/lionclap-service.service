@@ -1,0 +1,28 @@
+# systemd user unit for the LionClap HTTP service.
+#
+#   mkdir -p ~/.config/systemd/user ~/.config/lionclap
+#   cp scripts/lionclap-service.service ~/.config/systemd/user/
+#   $EDITOR ~/.config/systemd/user/lionclap-service.service      # set the path of the repository in ExecStart
+#   $EDITOR ~/.config/lionclap/service.env                       # CLAP_CKPT=..., CLAP_PORT=..., CLAP_DEVICE=...
+#   systemctl --user daemon-reload && systemctl --user enable --now lionclap-service
+#   journalctl --user -u lionclap-service -f                     # the log
+#   loginctl enable-linger "$USER"                               # (optional) start at boot and keep it running after you log out
+#
+# Build the service once by hand before enabling it (scripts/run-service.sh --build, Ctrl+C when it listens): the first
+# build takes minutes and systemd would time out waiting for it. A token goes in a file (CLAP_TOKEN=... in service.env
+# with mode 600, or pass --token-file in ExecStart), not in this unit.
+[Unit]
+Description=LionClap audio-tagging service (HTTP)
+After=network.target
+
+[Service]
+Type=simple
+EnvironmentFile=-%h/.config/lionclap/service.env
+ExecStart=%h/Proyectos/lion-clap/scripts/run-service.sh
+Restart=on-failure
+RestartSec=5
+KillSignal=SIGTERM
+TimeoutStopSec=30
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,223 @@
+# Layout convention (a test reads this file with a small indentation-based reader, so keep it):
+#   paths:            "  /path:" at 2 spaces, "    get|post:" at 4, "      responses:" at 6, "        '200':" at 8
+#   components.schemas.<Name>.properties.<field>: "        <field>:" at 8 with "default", "minimum", "maximum", "maxItems" at 10 or deeper
+openapi: 3.0.3
+info:
+  title: LionClap audio-tagging service
+  version: "1"
+  x-max-body-bytes: 40000000
+  description: |
+    Scores an audio clip against text tags with CLAP (`laion/clap-htsat-unfused`, HTSAT-tiny audio encoder and RoBERTa-base text encoder),
+    in C# and without Python. It is the same HTTP interface as the Python service of the orchestrator, so a client written for that one works unchanged.
+
+    Post a WAV (base64) and the tags to compare it with, grouped in categories; get the best tags of each category with their score.
+    The score is the dot product of the audio embedding with the embedding of the tag put into a sentence (`template`, default `This audio is a {} song.`).
+    Scores of different clips and templates are comparable, but they are similarity values, not probabilities: measured on songs of known style they
+    do not separate genres reliably, so treat the service as an experiment.
+
+    The audio is decoded (WAV, PCM 8/16/24/32 bit or float 32/64 bit, any rate, any number of channels, mixed to mono), resampled to 48 kHz by linear
+    interpolation, and cut into up to three windows of 10 s that start at 0, 5 s and 10 s (each is used only if it is longer than 1 s); the audio embedding is the
+    mean of the normalised embeddings of the windows. Audio of one second or less is refused.
+
+    One classification is made at a time; the others wait in arrival order (`/health` shows how many). The model is loaded on the first classification, which
+    therefore takes a few seconds longer.
+
+    When the service has a token, every call below needs `Authorization: Bearer <token>`; this page and `/openapi.yaml` do not.
+    A body larger than 40,000,000 bytes is refused.
+servers:
+  - url: /
+security:
+  - bearerAuth: []
+paths:
+  /health:
+    get:
+      summary: Is the service ready, and what is it doing
+      operationId: health
+      responses:
+        '200':
+          description: The state of the service. `ready` is true when the weights and the tokenizer are found and the device works (a GPU is not required). It never loads the model.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+              example:
+                ready: true
+                version: "1"
+                busy: false
+                queued: 0
+                gpu: null
+                missing: []
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /classify:
+    post:
+      summary: Score an audio clip against tags
+      operationId: classify
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClassifyRequest'
+            example:
+              wav_base64: UklGRiQAAABXQVZFZm10IBAAAAABAAEAgLsAAAB3AQACABAAZGF0YQAAAAA=
+              labels:
+                genre: [rock, jazz, classical, electronic]
+                mood: [happy, sad, calm]
+              template: This audio is a {} song.
+              top: 2
+      responses:
+        '200':
+          description: The best tags of every category, in the order of the request, and the duration of the audio at 48 kHz.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClassifyResponse'
+              example:
+                seconds: 12.0
+                categories:
+                  genre:
+                    - {tag: electronic, score: 0.179}
+                    - {tag: classical, score: 0.154}
+                  mood:
+                    - {tag: calm, score: 0.21}
+                    - {tag: sad, score: 0.165}
+        '400':
+          description: The request cannot be used (the message says why) - not JSON, no labels, a template without `{}`, a `wav_base64` that is not base64 or not a readable WAV, or audio of one second or less.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '413':
+          description: The body is larger than 40,000,000 bytes.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: An unexpected failure; the message says what.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: The weights (or the tokenizer, or the device) are not available; `missing` says what.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WeightsMissing'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+  responses:
+    Unauthorized:
+      description: A token is configured and the call did not carry it.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: unauthorized
+  schemas:
+    Health:
+      type: object
+      required: [ready, version, busy, queued, gpu, missing]
+      properties:
+        ready:
+          type: boolean
+        version:
+          type: string
+          description: The version string the service was started with (`CLAP_VERSION`).
+        busy:
+          type: boolean
+          description: A classification is running.
+        queued:
+          type: integer
+          description: How many classifications wait for the running one.
+        gpu:
+          type: object
+          nullable: true
+          description: Null on CPU; on CUDA the card, read from `nvidia-smi` when it is available (a number that cannot be known is null).
+          properties:
+            name:
+              type: string
+            free_mb:
+              type: integer
+              nullable: true
+            total_mb:
+              type: integer
+              nullable: true
+        missing:
+          type: array
+          items:
+            type: string
+          description: What prevents readiness - `models--laion--clap-htsat-unfused` when no weights are found, `tokenizer.json`, or the reason a device cannot be used.
+    ClassifyRequest:
+      type: object
+      required: [wav_base64, labels]
+      properties:
+        wav_base64:
+          type: string
+          description: A WAV file, base64 encoded (standard alphabet, padded, no line breaks).
+        labels:
+          type: object
+          description: The tags to compare the audio with, grouped by category. The order of the categories is kept in the answer.
+          additionalProperties:
+            type: array
+            maxItems: 200
+            items:
+              type: string
+            description: Up to 200 tags per category (the first 200 are used). A category with no tags answers an empty list.
+        template:
+          type: string
+          default: "This audio is a {} song."
+          description: The sentence each tag is put into; it must contain `{}`, which is replaced by the tag. Empty means the default.
+        top:
+          type: integer
+          default: 3
+          minimum: 1
+          maximum: 10
+          description: How many tags to return per category. 0 or absent means 3; values outside 1-10 are clamped to that range.
+    ClassifyResponse:
+      type: object
+      required: [seconds, categories]
+      properties:
+        seconds:
+          type: number
+          description: Duration of the audio at 48 kHz, rounded to one decimal.
+        categories:
+          type: object
+          description: For every category of the request, the best tags ordered by descending score.
+          additionalProperties:
+            type: array
+            items:
+              $ref: '#/components/schemas/TagScore'
+    TagScore:
+      type: object
+      required: [tag, score]
+      properties:
+        tag:
+          type: string
+        score:
+          type: number
+          description: Dot product of the audio embedding and the tag embedding, rounded to three decimals.
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+    WeightsMissing:
+      type: object
+      required: [error, missing]
+      properties:
+        error:
+          type: string
+        missing:
+          type: array
+          items:
+            type: string

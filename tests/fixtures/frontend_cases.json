@@ -1,0 +1,42 @@
+{
+  "cases": [
+    {
+      "cut_offset": 0,
+      "name": "tone",
+      "samples": 480000,
+      "source_samples": 480000
+    },
+    {
+      "cut_offset": 24000,
+      "name": "noise",
+      "samples": 480000,
+      "source_samples": 576000
+    },
+    {
+      "cut_offset": 0,
+      "name": "chirp",
+      "samples": 206400,
+      "source_samples": 206400
+    },
+    {
+      "cut_offset": 0,
+      "name": "clicks",
+      "samples": 336000,
+      "source_samples": 336000
+    },
+    {
+      "cut_offset": 0,
+      "name": "mix",
+      "samples": 72000,
+      "source_samples": 72000
+    }
+  ],
+  "max_abs_plain_numpy_stft": 4.110534945311883e-06,
+  "max_abs_recomputed_htk": 117.43211364746094,
+  "max_abs_recomputed_slaney": 0.0,
+  "max_samples": 480000,
+  "mel_bank_used": "slaney",
+  "padding": "repeatpad",
+  "sampling_rate": 48000,
+  "truncation": "rand_trunc (never taken: every waveform has at most max_samples)"
+}

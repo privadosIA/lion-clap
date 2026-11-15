@@ -1,0 +1,284 @@
+{
+  "cases": [
+    {
+      "id": 0,
+      "wav": "tone_12s_16k_mono_pcm16.wav",
+      "sample_rate": 16000,
+      "channels": 1,
+      "subtype": "PCM_16",
+      "windows": 3,
+      "request": {
+        "labels": {
+          "genre": [
+            "rock",
+            "jazz",
+            "classical",
+            "electronic",
+            "hip hop",
+            "folk",
+            "metal",
+            "reggae"
+          ],
+          "mood": [
+            "happy",
+            "sad",
+            "nostalgic",
+            "calm",
+            "mysterious"
+          ]
+        }
+      },
+      "response": {
+        "seconds": 12.0,
+        "categories": {
+          "genre": [
+            {
+              "tag": "electronic",
+              "score": 0.179
+            },
+            {
+              "tag": "classical",
+              "score": 0.154
+            },
+            {
+              "tag": "jazz",
+              "score": 0.084
+            }
+          ],
+          "mood": [
+            {
+              "tag": "mysterious",
+              "score": 0.21
+            },
+            {
+              "tag": "sad",
+              "score": 0.165
+            },
+            {
+              "tag": "nostalgic",
+              "score": 0.12
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": 1,
+      "wav": "mix_3s_22k_stereo_pcm16.wav",
+      "sample_rate": 22050,
+      "channels": 2,
+      "subtype": "PCM_16",
+      "windows": 1,
+      "request": {
+        "labels": {
+          "instrument": [
+            "piano",
+            "guitar",
+            "drums",
+            "violin",
+            "synthesizer",
+            "flute"
+          ],
+          "style": [
+            "ambient",
+            "dance",
+            "orchestral",
+            "acoustic"
+          ]
+        },
+        "template": "A recording of {} music.",
+        "top": 5
+      },
+      "response": {
+        "seconds": 3.0,
+        "categories": {
+          "instrument": [
+            {
+              "tag": "synthesizer",
+              "score": 0.12
+            },
+            {
+              "tag": "piano",
+              "score": 0.106
+            },
+            {
+              "tag": "flute",
+              "score": 0.012
+            },
+            {
+              "tag": "guitar",
+              "score": -0.031
+            },
+            {
+              "tag": "drums",
+              "score": -0.052
+            }
+          ],
+          "style": [
+            {
+              "tag": "orchestral",
+              "score": 0.117
+            },
+            {
+              "tag": "dance",
+              "score": 0.038
+            },
+            {
+              "tag": "ambient",
+              "score": -0.009
+            },
+            {
+              "tag": "acoustic",
+              "score": -0.12
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": 2,
+      "wav": "noise_2s_48k_mono_float32.wav",
+      "sample_rate": 48000,
+      "channels": 1,
+      "subtype": "FLOAT",
+      "windows": 1,
+      "request": {
+        "labels": {
+          "genre": [
+            "pop",
+            "blues",
+            "country",
+            "techno"
+          ],
+          "mood": [
+            "romantic",
+            "angry",
+            "peaceful"
+          ],
+          "tempo": [
+            "fast",
+            "slow"
+          ]
+        },
+        "top": 0
+      },
+      "response": {
+        "seconds": 2.0,
+        "categories": {
+          "genre": [
+            {
+              "tag": "pop",
+              "score": 0.2
+            },
+            {
+              "tag": "country",
+              "score": 0.136
+            },
+            {
+              "tag": "blues",
+              "score": 0.105
+            }
+          ],
+          "mood": [
+            {
+              "tag": "angry",
+              "score": 0.174
+            },
+            {
+              "tag": "romantic",
+              "score": 0.114
+            },
+            {
+              "tag": "peaceful",
+              "score": 0.055
+            }
+          ],
+          "tempo": [
+            {
+              "tag": "fast",
+              "score": 0.14
+            },
+            {
+              "tag": "slow",
+              "score": 0.044
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": 3,
+      "wav": "chirp_1p5s_44k_mono_pcm24.wav",
+      "sample_rate": 44100,
+      "channels": 1,
+      "subtype": "PCM_24",
+      "windows": 1,
+      "request": {
+        "labels": {
+          "genre": [
+            "pop",
+            "música clásica",
+            "jazz",
+            "electronic",
+            "folk",
+            "metal",
+            "reggae",
+            "latin",
+            "opera",
+            "disco",
+            "funk",
+            "ambient"
+          ]
+        },
+        "top": 50
+      },
+      "response": {
+        "seconds": 1.5,
+        "categories": {
+          "genre": [
+            {
+              "tag": "electronic",
+              "score": 0.243
+            },
+            {
+              "tag": "pop",
+              "score": 0.235
+            },
+            {
+              "tag": "folk",
+              "score": 0.178
+            },
+            {
+              "tag": "música clásica",
+              "score": 0.157
+            },
+            {
+              "tag": "ambient",
+              "score": 0.148
+            },
+            {
+              "tag": "opera",
+              "score": 0.145
+            },
+            {
+              "tag": "latin",
+              "score": 0.138
+            },
+            {
+              "tag": "disco",
+              "score": 0.135
+            },
+            {
+              "tag": "jazz",
+              "score": 0.124
+            },
+            {
+              "tag": "funk",
+              "score": 0.096
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

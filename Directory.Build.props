@@ -1,0 +1,45 @@
+<Project>
+
+  <PropertyGroup>
+    <!-- Native libtorch backend: cpu | cuda-windows | cuda-linux. Chosen with -p:TorchBackend=... -->
+    <TorchBackend Condition="'$(TorchBackend)' == ''">cpu</TorchBackend>
+    <TorchSharpVersion>0.107.*</TorchSharpVersion>
+    <!-- Shared model-agnostic code. Default: sibling folder; override with -p:MusicGenCoreDir=... -->
+    <MusicGenCoreDir Condition="'$(MusicGenCoreDir)' == '' and Exists('$(MSBuildThisFileDirectory)third_party/musicgen-core')">$(MSBuildThisFileDirectory)third_party/musicgen-core</MusicGenCoreDir>
+    <MusicGenCoreDir Condition="'$(MusicGenCoreDir)' == ''">$(MSBuildThisFileDirectory)../musicgen-core</MusicGenCoreDir>
+    <!-- The core is not in the solution: without this a solution build compiles it with the default (Debug) configuration even for -c Release. -->
+    <ShouldUnsetParentConfigurationAndPlatform>false</ShouldUnsetParentConfigurationAndPlatform>
+  </PropertyGroup>
+
+  <!-- Only ONE of the three. The app and the tests share it so they resolve the same native runtime. -->
+  <ItemGroup Condition="'$(TorchBackend)' == 'cpu'">
+    <PackageReference Include="TorchSharp-cpu" Version="$(TorchSharpVersion)" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TorchBackend)' == 'cuda-windows'">
+    <PackageReference Include="TorchSharp-cuda-windows" Version="$(TorchSharpVersion)" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TorchBackend)' == 'cuda-linux'">
+    <PackageReference Include="TorchSharp-cuda-linux" Version="$(TorchSharpVersion)" />
+  </ItemGroup>
+
+  <!--
+    HuggingFace tokenizer (Rust library) via Tokenizers.DotNet. The main package does NOT ship the native library: there is one
+    runtime package per platform. It is picked automatically from the OS and architecture; -p:TokenizerRuntime=<rid> forces it (e.g. to build for another machine).
+    RIDs with a package: linux-x64 | linux-arm64 | win-x64 | win-arm64 | osx-x64 | osx-arm64.
+  -->
+  <PropertyGroup>
+    <TokenizersVersion>1.4.1</TokenizersVersion>
+    <_OsArch>$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)</_OsArch>
+    <TokenizerRuntime Condition="'$(TokenizerRuntime)' == '' and $([MSBuild]::IsOSPlatform('Linux')) and '$(_OsArch)' == 'X64'">linux-x64</TokenizerRuntime>
+    <TokenizerRuntime Condition="'$(TokenizerRuntime)' == '' and $([MSBuild]::IsOSPlatform('Linux')) and '$(_OsArch)' == 'Arm64'">linux-arm64</TokenizerRuntime>
+    <TokenizerRuntime Condition="'$(TokenizerRuntime)' == '' and $([MSBuild]::IsOSPlatform('Windows')) and '$(_OsArch)' == 'X64'">win-x64</TokenizerRuntime>
+    <TokenizerRuntime Condition="'$(TokenizerRuntime)' == '' and $([MSBuild]::IsOSPlatform('Windows')) and '$(_OsArch)' == 'Arm64'">win-arm64</TokenizerRuntime>
+    <TokenizerRuntime Condition="'$(TokenizerRuntime)' == '' and $([MSBuild]::IsOSPlatform('OSX')) and '$(_OsArch)' == 'X64'">osx-x64</TokenizerRuntime>
+    <TokenizerRuntime Condition="'$(TokenizerRuntime)' == '' and $([MSBuild]::IsOSPlatform('OSX')) and '$(_OsArch)' == 'Arm64'">osx-arm64</TokenizerRuntime>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Tokenizers.DotNet" Version="$(TokenizersVersion)" />
+    <PackageReference Condition="'$(TokenizerRuntime)' != ''" Include="Tokenizers.DotNet.runtime.$(TokenizerRuntime)" Version="$(TokenizersVersion)" />
+  </ItemGroup>
+
+</Project>
