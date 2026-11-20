@@ -1,0 +1,10 @@
+root = true
+
+[*.cs]
+charset = utf-8
+
+# Tests: style-level performance hints that add noise, not value (constant arrays in test data, helper return types).
+[tests/**.cs]
+dotnet_diagnostic.CA1861.severity = none
+dotnet_diagnostic.CA1859.severity = none
+dotnet_diagnostic.xUnit1042.severity = none

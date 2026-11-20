@@ -24,9 +24,9 @@ public static class LinearResampler
         {
             var x = i == length - 1 && length > 1 ? last : i * step;
             var j = (int)Math.Floor(x);
-            if (j >= last || x == j)
+            if (j >= last || x <= j)
             {
-                result[i] = samples[Math.Min(j, last)];                      // numpy.interp returns the sample itself on an exact hit and at the end
+                result[i] = samples[Math.Min(j, last)];                      // numpy.interp returns the sample itself on an exact hit (x <= j is x == j, because j = floor(x) <= x) and at the end
                 continue;
             }
             double left = samples[j], right = samples[j + 1];

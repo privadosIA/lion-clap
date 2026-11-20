@@ -20,7 +20,7 @@ public class ServiceRealEngineTests(ITestOutputHelper output)
         return sb.Append('}').ToString();
     }
 
-    private double AssertSameAsReference(JsonElement c, JsonElement answer)
+    private static double AssertSameAsReference(JsonElement c, JsonElement answer)
     {
         var expected = c.GetProperty("response");
         Assert.Equal(expected.GetProperty("seconds").GetDouble(), answer.GetProperty("seconds").GetDouble());

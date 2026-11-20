@@ -82,7 +82,9 @@ internal sealed class HealthProbe
         var fallback = new GpuView($"cuda:{index}", null, null);
         try
         {
-            using var p = Process.Start(new ProcessStartInfo("nvidia-smi", $"--query-gpu=name,memory.free,memory.total --format=csv,noheader,nounits -i {index}")
+            var smi = FindNvidiaSmi();
+            if (smi is null) return fallback;
+            using var p = Process.Start(new ProcessStartInfo(smi, $"--query-gpu=name,memory.free,memory.total --format=csv,noheader,nounits -i {index}")
             { RedirectStandardOutput = true, RedirectStandardError = true, UseShellExecute = false });
             if (p is null) return fallback;
             var text = p.StandardOutput.ReadToEndAsync();
@@ -91,6 +93,19 @@ internal sealed class HealthProbe
         }
         catch (Win32Exception) { return fallback; }
         catch (InvalidOperationException) { return fallback; }
+    }
+
+    /// <summary>
+    /// The absolute path of <c>nvidia-smi</c> in its standard install locations, or null. It is never looked up in the PATH, so a
+    /// writable directory listed there cannot make the service run another program.
+    /// </summary>
+    internal static string? FindNvidiaSmi()
+    {
+        IEnumerable<string> candidates = OperatingSystem.IsWindows()
+            ? [Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "nvidia-smi.exe"),
+               Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "NVIDIA Corporation", "NVSMI", "nvidia-smi.exe")]
+            : ["/usr/bin/nvidia-smi", "/usr/local/bin/nvidia-smi", "/usr/lib/wsl/lib/nvidia-smi"];
+        return candidates.FirstOrDefault(c => Path.IsPathRooted(c) && File.Exists(c));
     }
 
     /// <summary>Reads the first line of <c>nvidia-smi --query-gpu=name,memory.free,memory.total --format=csv,noheader,nounits</c>.</summary>

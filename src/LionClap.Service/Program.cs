@@ -4,7 +4,7 @@ ServiceSettings settings;
 try { settings = ServiceSettings.FromEnvironment(); }
 catch (SettingsException e)
 {
-    Console.Error.WriteLine($"error: {e.Message}");
+    await Console.Error.WriteLineAsync($"error: {e.Message}");
     return 2;
 }
 

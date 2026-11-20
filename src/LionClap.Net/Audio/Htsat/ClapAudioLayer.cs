@@ -40,7 +40,7 @@ public sealed class ClapAudioSelfAttention : nn.Module
         var scores = raw / Math.Sqrt(_headSize);
         using (scores)
         {
-            using var table = relative_position_bias_table.index_select(0, get_buffer("relative_position_index").reshape(-1));
+            using var table = relative_position_bias_table.index_select(0, (get_buffer("relative_position_index") ?? throw new InvalidOperationException("the relative_position_index buffer is missing")).reshape(-1));
             using var bias = table.reshape(n, n, _heads).permute(2, 0, 1).contiguous().unsqueeze(0);
             var biased = scores + bias;
             using (biased)

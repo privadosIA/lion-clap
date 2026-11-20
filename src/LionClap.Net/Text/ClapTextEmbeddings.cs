@@ -48,7 +48,7 @@ public sealed class ClapTextEmbeddings : nn.Module<Tensor, Tensor>
         TextInputs.Validate(input_ids, null, _config);
         var (rows, length) = (input_ids.shape[0], input_ids.shape[1]);
         using var positions = PositionIds(input_ids, _config.PadTokenId);
-        using var tokenTypes = get_buffer("token_type_ids").narrow(1, 0, length).expand(rows, length);
+        using var tokenTypes = (get_buffer("token_type_ids") ?? throw new InvalidOperationException("the token_type_ids buffer is missing")).narrow(1, 0, length).expand(rows, length);
 
         using var words = word_embeddings.forward(input_ids);
         using var types = token_type_embeddings.forward(tokenTypes);

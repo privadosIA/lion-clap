@@ -32,7 +32,7 @@ A wrong value stops the service at start with a message that names the variable 
 
 `CLAP_CKPT` is the directory the Python container mounts at `/ckpt`, unchanged: the Hugging Face cache `hub/models--laion--clap-htsat-unfused/snapshots/<revision>/` holding `pytorch_model.bin`, `config.json` and `tokenizer.json`. The service reads the PyTorch file itself (no Python, no conversion step). A flat directory also works, with `model.safetensors` (preferred when both formats are there) or `pytorch_model.bin`, plus `tokenizer.json` and, optionally, `config.json`. The weights are never inside the repository. Nothing is downloaded.
 
-Tests that need them read `CLAP_HF_DIR` (the Hugging Face directory) and `CLAP_CKPT` (a directory made by the golden run, `tools/golden_all.sh`).
+Tests that need them read `CLAP_HF_DIR` (the Hugging Face directory) and `CLAP_CKPT` (a directory made by the golden run, `tools/golden_all.sh`); see `CLAUDE.md`.
 
 ### The start script
 
@@ -116,4 +116,4 @@ The paths, bodies, status codes, defaults and limits are the same; for the golde
 
 ## GPU
 
-The CPU is the verified path: every number in `docs/audio-frontend.md`, `docs/htsat-audio-encoder.md` and `docs/roberta-text-encoder.md` was measured there. `--device cuda` runs the same code on the GPU with a CUDA build (`-p:TorchBackend=cuda-linux`); its numerics are only checked by the opt-in test (`CLAP_DEVICE=cuda dotnet test …`). Without a CUDA device or build, `/health` says `ready:false` and the reason in `missing`.
+The CPU is the verified path: every number in `docs/audio-frontend.md`, `docs/htsat-audio-encoder.md` and `docs/roberta-text-encoder.md` was measured there. `--device cuda` runs the same code on the GPU with a CUDA build (`-p:TorchBackend=cuda-linux`); its numerics are only checked by the opt-in test (`CLAP_DEVICE=cuda dotnet test …`). Without a CUDA device or build, `/health` says `ready:false` and the reason in `missing`. The `gpu` card of `/health` (name and free and total memory) is read with `nvidia-smi` from its standard install location (`/usr/bin`, `/usr/local/bin` or `/usr/lib/wsl/lib` on Linux, `System32` or `NVIDIA Corporation\NVSMI` on Windows), never through the `PATH`; if it is not there, the card is reported by its index only, with null memory.

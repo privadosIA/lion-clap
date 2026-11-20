@@ -1,0 +1,14 @@
+- name: Home
+  href: index.md
+- name: Articles
+  items:
+    - name: Audio frontend
+      href: audio-frontend.md
+    - name: HTSAT audio encoder
+      href: htsat-audio-encoder.md
+    - name: RoBERTa text encoder
+      href: roberta-text-encoder.md
+    - name: HTTP service
+      href: http-service.md
+- name: API
+  href: api/

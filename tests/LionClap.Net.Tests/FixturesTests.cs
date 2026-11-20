@@ -16,8 +16,10 @@ public class FixturesTests
     [Fact]
     public void EveryFixtureIsVerifiedAgainstTheManifest()
     {
-        foreach (var file in Directory.GetFiles(Fixtures.Dir).Select(Path.GetFileName).Where(n => n != "MANIFEST.md"))
-            Fixtures.PathOf(file!); // throws InvalidDataException on a mismatch
+        var files = Directory.GetFiles(Fixtures.Dir).Select(Path.GetFileName).Where(n => n != "MANIFEST.md").ToList();
+        Assert.NotEmpty(files);
+        foreach (var file in files)
+            Assert.Null(Record.Exception(() => Fixtures.PathOf(file!))); // PathOf throws InvalidDataException on a mismatch
     }
 
     [Fact]

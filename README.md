@@ -59,7 +59,7 @@ Scores are cosine similarities, not probabilities: use them to rank tags of one 
 dotnet test LionClap.Net.sln -p:TorchBackend=cpu
 ```
 
-Tests that need the weights are skipped, with the reason, unless `CLAP_CKPT` and `CLAP_HF_DIR` are set; `CLAP_DEVICE=cuda` (plus a CUDA build) enables the opt-in GPU parity test. `CLAP_CKPT` is a directory with `model.safetensors`, `config.json` and `tokenizer.json` made by the golden run (`tools/golden_all.sh`); `CLAP_HF_DIR` is the Hugging Face directory that holds `pytorch_model.bin`.
+Tests that need the weights are skipped, with the reason, unless `CLAP_CKPT` and `CLAP_HF_DIR` are set; `CLAP_DEVICE=cuda` (plus a CUDA build) enables the opt-in GPU parity test. See [`CLAUDE.md`](CLAUDE.md) for the exact variables and commands.
 
 ## Repository layout
 
@@ -69,7 +69,7 @@ src/LionClap.Service   ASP.NET Core service, openapi.yaml and Swagger UI embedde
 tests/                 xUnit tests and the golden fixtures (checked with tools/verify_manifest.sh)
 tools/                 golden run: regenerates the fixtures inside the reference container
 scripts/               service start script and systemd unit
-docs/                  one document per component
+docs/                  one document per component, and the DocFX site configuration
 openspec/              specs and change history (spec-driven workflow)
 ```
 
@@ -81,6 +81,15 @@ The shared code lives in the sibling repository `musicgen-core` (`~/Proyectos/mu
 - [`docs/htsat-audio-encoder.md`](docs/htsat-audio-encoder.md)
 - [`docs/roberta-text-encoder.md`](docs/roberta-text-encoder.md)
 - [`docs/http-service.md`](docs/http-service.md)
+
+These articles and the API reference of the library, generated from its XML comments (`///`), are built as a static site with [DocFX](https://dotnet.github.io/docfx/) (pinned as a local tool in `.config/dotnet-tools.json`):
+
+```bash
+dotnet tool restore
+TorchBackend=cpu dotnet docfx docs/docfx.json --serve   # builds docs/_site and serves it on http://localhost:8080
+```
+
+`docs/api` and `docs/_site` are generated and ignored by git. The home page is `docs/index.md`. The CI builds the site on every push with `--warningsAsErrors`, so a broken `<see cref>` or a broken link between articles fails that step; the site is not published anywhere.
 
 ## Not ported
 
@@ -97,15 +106,20 @@ Depends on `musicgen-core` (shared code) and follows the original LAION-CLAP. Us
 | Repository | What it is |
 |---|---|
 | [`mediaOrquestator`](https://github.com/privadosIA/mediaOrquestator) | The server: the HTTP API and its contract, the pipelines (video, images, music), the run history and the music services it starts. |
-| [`dashboards-labs`](https://github.com/privadosIA/dashboards-labs) | The dashboards (Angular) that talk to the server through its OpenAPI contract. |
 | [`heartmula`](https://github.com/privadosIA/heartmula) | C# (.NET 8 + TorchSharp) port of [heartlib](https://github.com/HeartMuLa/heartlib): the HeartMuLa song generator, run by the server as a service. |
 | [`DiffRhythm2`](https://github.com/privadosIA/DiffRhythm2) | C# port of [DiffRhythm2](https://github.com/ASLP-lab/DiffRhythm2): a diffusion model that writes a whole song. |
 | [`lion-clap`](https://github.com/privadosIA/lion-clap) (this repository) | C# port of [LAION-CLAP](https://github.com/LAION-AI/CLAP): audio and text embeddings, used to recognise songs. |
 | [`musicgen-core`](https://github.com/privadosIA/musicgen-core) | The TorchSharp building blocks shared by the three ports. |
-| [`forms-lib`](https://github.com/privadosIA/forms-lib) | `@core/dynamic-forms`, the Angular library that draws forms and tables from JSON (vendored in `dashboards-labs`). |
+| [`forms-lib`](https://github.com/privadosIA/forms-lib) | `@core/dynamic-forms`, the Angular library that draws forms and tables from JSON. |
 
-The links are to the private copies of these repositories. The third-party tools, models and libraries they build on, with their licenses, are listed in [THIRD_PARTY.md](https://github.com/privadosIA/mediaOrquestator/blob/main/THIRD_PARTY.md).
+The links are to the public copies of these repositories. The third-party tools, models and libraries they build on, with their licenses, are listed in [THIRD_PARTY.md](https://github.com/privadosIA/mediaOrquestator/blob/main/THIRD_PARTY.md).
 
 ## License
 
 Apache 2.0 (see [LICENSE](LICENSE)). This is a port of work by other people; see the origin and licences of the original and of the weights in the sections above and, for the whole set, in the mediaOrquestator `dotnet/THIRD_PARTY.md`.
+
+This licence covers the code of this repository. The model weights (`laion/clap-htsat-unfused`) are downloaded from their publisher and are under their own licence: see the model card.
+
+## Maintenance
+
+Maintained by one person in their free time: issues and pull requests are welcome, with no promised response time. See [CONTRIBUTING.md](CONTRIBUTING.md) and, for vulnerabilities, [SECURITY.md](SECURITY.md).

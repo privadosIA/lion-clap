@@ -11,7 +11,7 @@ public sealed class TorchFileBuilder
     private readonly List<Tensor> _tensors = new();
     private readonly Dictionary<string, byte[]> _storages = new();
 
-    public string StorageClass(string dtype) => dtype == "F32" ? "torch FloatStorage" : "torch LongStorage";
+    public static string StorageClass(string dtype) => dtype == "F32" ? "torch FloatStorage" : "torch LongStorage";
 
     // switches
     public string? ForbiddenGlobal { get; set; }

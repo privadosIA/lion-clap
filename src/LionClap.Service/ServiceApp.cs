@@ -55,7 +55,7 @@ internal sealed class ServiceApp
             if (path.Length > 1) path = path.TrimEnd('/');
             var method = ctx.Request.Method;
 
-            if (Docs.TryServe(ctx, path, method) is { } doc) { await doc; return; }
+            if (await Docs.TryServe(ctx, path, method)) return;
 
             if (_settings.Token.Length > 0 && !Authorized(ctx)) { await Json(ctx, 401, new ErrorBody("unauthorized")); return; }
 
@@ -81,9 +81,9 @@ internal sealed class ServiceApp
         var buffer = new MemoryStream();
         var chunk = new byte[64 * 1024];
         int n;
-        while ((n = await ctx.Request.Body.ReadAsync(chunk)) > 0)
+        while ((n = await ctx.Request.Body.ReadAsync(chunk, ctx.RequestAborted)) > 0)
         {
-            buffer.Write(chunk, 0, n);
+            await buffer.WriteAsync(chunk.AsMemory(0, n), ctx.RequestAborted);
             if (buffer.Length > MaxBodyBytes) { await Json(ctx, 413, new ErrorBody("the request is too large")); return; }
         }
 
@@ -105,7 +105,7 @@ internal sealed class ServiceApp
             ctx.Response.StatusCode = 200;
             ctx.Response.ContentType = "application/json";
             ctx.Response.ContentLength = bytes.Length;
-            await ctx.Response.Body.WriteAsync(bytes);
+            await ctx.Response.Body.WriteAsync(bytes, ctx.RequestAborted);
         }
         finally { doc?.Dispose(); }
     }
@@ -120,7 +120,7 @@ internal sealed class ServiceApp
         ctx.Response.StatusCode = status;
         ctx.Response.ContentType = "application/json";
         ctx.Response.ContentLength = bytes.Length;
-        await ctx.Response.Body.WriteAsync(bytes);
+        await ctx.Response.Body.WriteAsync(bytes, ctx.RequestAborted);
     }
 
     internal sealed record ErrorBody([property: JsonPropertyName("error")] string Error);
@@ -154,7 +154,8 @@ internal static class Docs
         }
     }
 
-    public static Task? TryServe(HttpContext ctx, string path, string method)
+    /// <summary>Serves the embedded documentation or API description when <paramref name="path"/> is one of them; false when it is not (or the method is not GET/HEAD).</summary>
+    public static async Task<bool> TryServe(HttpContext ctx, string path, string method)
     {
         string? resource = path switch
         {
@@ -163,10 +164,11 @@ internal static class Docs
             _ when path.StartsWith("/docs/", StringComparison.Ordinal) && !path.Contains("..") => "docs/" + path["/docs/".Length..],
             _ => null,
         };
-        if (resource is null || (method != "GET" && method != "HEAD")) return null;
+        if (resource is null || (method != "GET" && method != "HEAD")) return false;
         var stream = Assembly.GetManifestResourceStream(resource);
-        if (stream is null) return null;
-        return Send(ctx, stream, resource);
+        if (stream is null) return false;
+        await Send(ctx, stream, resource);
+        return true;
     }
 
     private static async Task Send(HttpContext ctx, Stream stream, string resource)
@@ -176,7 +178,7 @@ internal static class Docs
             ctx.Response.StatusCode = 200;
             ctx.Response.ContentType = ContentType(resource);
             ctx.Response.ContentLength = stream.Length;
-            if (ctx.Request.Method != "HEAD") await stream.CopyToAsync(ctx.Response.Body);
+            if (ctx.Request.Method != "HEAD") await stream.CopyToAsync(ctx.Response.Body, ctx.RequestAborted);
         }
     }
 }

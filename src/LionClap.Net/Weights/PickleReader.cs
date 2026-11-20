@@ -42,7 +42,7 @@ internal sealed class PickleReader
     /// <summary>Interprets <paramref name="pickle"/> and returns the tensors of its top-level dictionary in file order.</summary>
     public static IReadOnlyList<KeyValuePair<string, TensorRef>> ReadStateDict(byte[] pickle) => new PickleReader(pickle).Run();
 
-    private IReadOnlyList<KeyValuePair<string, TensorRef>> Run()
+    private List<KeyValuePair<string, TensorRef>> Run()
     {
         while (true)
         {
@@ -82,7 +82,7 @@ internal sealed class PickleReader
         }
     }
 
-    private IReadOnlyList<KeyValuePair<string, TensorRef>> Result(object root)
+    private static List<KeyValuePair<string, TensorRef>> Result(object root)
     {
         if (root is not Dict dict) throw new InvalidDataException("the pickle does not hold a dictionary of tensors");
         var result = new List<KeyValuePair<string, TensorRef>>(dict.Count);
@@ -97,7 +97,7 @@ internal sealed class PickleReader
 
     // ---- values --------------------------------------------------------------------------------------------------------------------------
 
-    private object Call(object callable, object args)
+    private static object Call(object callable, object args)
     {
         if (callable is not GlobalRef g || args is not object[] a)
             throw new InvalidDataException("the pickle calls something that is not an allowed function");
@@ -128,7 +128,7 @@ internal sealed class PickleReader
     private static long Dimension(object o) =>
         o is long n && n >= 0 ? n : throw new InvalidDataException("a tensor has a size or stride that is not a non-negative integer");
 
-    private object Persistent(object id)
+    private static StorageRef Persistent(object id)
     {
         // ('storage', <storage class>, key, location, number of elements)
         if (id is not object[] t || t.Length != 5 || t[0] is not "storage" || t[1] is not GlobalRef cls || t[2] is not string key || t[4] is not long elements)

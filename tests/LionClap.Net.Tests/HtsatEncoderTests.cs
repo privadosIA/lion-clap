@@ -113,10 +113,10 @@ public class HtsatEncoderTests(ITestOutputHelper output)
         var failures = new List<string>();
         using var pooled = encoder.Encode(stored["input_features"], (name, t) =>
         {
-            if (!stored.ContainsKey(name)) return; // the fixture keeps the first two blocks of stage 0 and every stage output
-            var peak = stored[name].abs().max().item<float>();
+            if (!stored.TryGetValue(name, out var stored_t)) return; // the fixture keeps the first two blocks of stage 0 and every stage output
+            var peak = stored_t.abs().max().item<float>();
             var limit = 1e-4 * Math.Max(1.0, peak);
-            var r = Parity.Compare(t, stored[name]);
+            var r = Parity.Compare(t, stored_t);
             output.WriteLine($"chain {name}: {r} peak|ref|={peak:F3} max_abs/peak={r.MaxAbs / peak:E2} limit={limit:E2}");
             if (r.MaxAbs > limit || r.CosSim < 0.9999) failures.Add($"{name}: {r} (limit {limit:E2})");
             compared.Add(name);
