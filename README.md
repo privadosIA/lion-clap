@@ -1,5 +1,7 @@
 # LionClap.Net
 
+> Part of [mediaOrquestator](https://orquestator.xuxo.net/), where it is the sound recognition of the server; examples of what the whole project makes are on its public page (es/en).
+
 C# port (.NET 8 + [TorchSharp](https://github.com/dotnet/TorchSharp)) of [LAION-CLAP](https://github.com/LAION-AI/CLAP), inference only. It embeds audio and text into the same 512-dimensional space, so you can score how well an audio clip matches a list of text tags ("piano", "orchestral", "a recording of ambient music"…). It generates nothing.
 
 It uses the Hugging Face weights [`laion/clap-htsat-unfused`](https://huggingface.co/laion/clap-htsat-unfused) (HTSAT-tiny audio encoder + RoBERTa-base text encoder, two projection MLPs, L2 normalisation), following the `transformers` `ClapModel`. **No Python at runtime**: the library, the service, the tests and the build are C# and shell only.
